@@ -73,7 +73,7 @@ def run_wayback_urls(target):
 
 def run_subzy(target):
     print(f"[+] Checking for subdomain takeover on {target}...")
-    subzy_cmd = f"subzy run --targets {target} > subzy_results[{target}].txt"
+    subzy_cmd = f"go run ./main.go run --target {target} > subzy_results[{target}].txt"
     subprocess.run(subzy_cmd, shell=True)
     print(f"[+] Subdomain takeover check completed. Results saved to 'subzy_results[{target}].txt'.")
     
