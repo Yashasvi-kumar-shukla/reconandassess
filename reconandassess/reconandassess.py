@@ -42,41 +42,6 @@ def save_wordpress_url(subdomain,domain):
         file.write(subdomain + "\n")
     print(f"[+] WordPress site saved: {subdomain}")
 
-def run_fuzzing(target):
-    print(f"[+] Performing fuzzing on {target}...")
-    fuzzing_cmd = f"ffuf -u https://{target}/FUZZ -w /usr/share/wordlists/dirb/common.txt -r -o fuzzing_results[{target}].txt"
-    subprocess.run(fuzzing_cmd, shell=True)
-    print(f"[+] Fuzzing completed. Results saved to 'fuzzing_results[{target}].txt'.")
-
-def run_sqlmap(target):
-    print(f"[+] Running SQLMap on {target}...")
-    sqlmap_cmd = f"sqlmap -u {target} --batch --dbs --output-dir=sqlmap_results[{target}]"
-    subprocess.run(sqlmap_cmd, shell=True)
-    print(f"[+] SQLMap scan completed. Results saved in 'sqlmap_results[{target}]'.")
-
-def run_xss_scan(target):
-    print(f"[+] Running XSS scan on {target} with XSStrike...")
-    
-    output_file = f"xss_results[{target}].txt"
-    xss_cmd = f"python3 XSStrike/xsstrike.py -u https://{target} --crawl --blind"
-
-    with open(output_file, "w") as file:
-        subprocess.run(xss_cmd, shell=True, stdout=file, stderr=file)
-    
-    print(f"[+] XSS scan completed. Results saved to '{output_file}'.")
-
-def run_wayback_urls(target):
-    print(f"[+] Extracting Wayback Machine URLs for {target}...")
-    wayback_cmd = f"getallurls {target} > wayback_urls[{target}].txt"
-    subprocess.run(wayback_cmd, shell=True)
-    print(f"[+] Wayback URLs saved to 'wayback_urls[{target}].txt'.")
-
-def run_subzy(target):
-    print(f"[+] Checking for subdomain takeover on {target}...")
-    subzy_cmd = f"subzy run --targets {target} > subzy_results[{target}].txt"
-    subprocess.run(subzy_cmd, shell=True)
-    print(f"[+] Subdomain takeover check completed. Results saved to 'subzy_results[{target}].txt'.")
-    
 def run_nmap(target):
     print(f"[+] Running Nmap scan on {target}...")
     nmap_cmd = f"nmap -T3 -A -v {target} -oN nmap_scan_results[{target}].txt"
@@ -89,7 +54,7 @@ def run_subfinder(domain):
     subprocess.run(subfinder_cmd, shell=True)
     print(f"[+] Subfinder completed. Results saved to 'subdomains[{domain}].txt'.")
 
-def run_gobuster(domain):
+def run_amass(domain, timeout=300):
     print(f"[+] Running Gobuster for domain: {domain}...")
     #wordlist = input("Enter the path to the wordlist
 
@@ -180,12 +145,6 @@ async def livefinder(target):
         file.write("\n".join(live_sites) + "\n")
     
     print(f"[+] Live subdomains saved to {OUTPUT_FILE}")
-    
-    for live_site in live_sites:
-        run_fuzzing(live_site)
-        run_sqlmap(live_site)
-        run_xss_scan(live_site)
-        run_subzy(live_site)
 
 
 def run_wpscan(subdomain,YOUR_API_KEY):
@@ -200,11 +159,9 @@ def main(target):
     run_subfinder(domain)
     
     # Run Amass with timeout handling
-    run_gobuster(domain)  
+    run_amass(domain, timeout=300)  
 
     combine_subdomains(domain)
-    print(f"[+] Running Wayback URL extraction for {domain}...")
-    run_wayback_urls(domain)
 
     with open(f"all_subdomains[{domain}].txt", "r") as subdomain_file:
         subdomains = subdomain_file.readlines()
@@ -228,4 +185,3 @@ if __name__ == "__main__":
         print(f"{'='*40}\n")
         main(target)
         asyncio.run(livefinder(target))
-
