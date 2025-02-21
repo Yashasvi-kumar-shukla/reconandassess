@@ -12,6 +12,35 @@ def get_target_folder(target):
     folder = f"results/{target}"
     os.makedirs(folder, exist_ok=True)  # Ensure the directory exists
     return folder
+
+
+def run_hydra(target):
+    """
+    Perform password brute-forcing on common services using Hydra.
+    Scans SSH, FTP, and HTTP forms with a simple user list and password list.
+    """
+    print(f"[+] Running Hydra brute-force scan on {target}...")
+    folder = get_target_folder(target)
+    output_file = f"{folder}/hydra_results.txt"
+
+    # Define common Hydra commands for different services
+    hydra_cmds = [
+        f"hydra -L users.txt -P passwords.txt ssh://{target} -o {output_file} -t 4",
+        f"hydra -L users.txt -P passwords.txt ftp://{target} -o {output_file} -t 4",
+        f"hydra -L users.txt -P passwords.txt http-get://{target}/login -o {output_file} -t 4"
+    ]
+
+    # Execute each Hydra command
+    for cmd in hydra_cmds:
+        try:
+            print(f"\n[+] Executing: {cmd}")
+            subprocess.run(cmd, shell=True)
+        except Exception as e:
+            print(f"[!] Hydra command failed: {e}")
+    
+    full_path = os.path.abspath(output_file)
+    print(f"[+] Hydra results saved at: {full_path}")
+
     
 def run_subfinder(domain):
     print(f"[+] Running Subfinder for domain: {domain}...")
@@ -228,6 +257,8 @@ async def livefinder(target):
 def main(target):
     folder = get_target_folder(target)
     run_nmap(target)
+    
+    run_hydra(target)
 
     domain = target if '.' in target else f"www.{target}"
     run_subfinder(domain)
@@ -255,3 +286,4 @@ if __name__ == "__main__":
         print(f"{'='*40}\n")
         main(target)
         asyncio.run(livefinder(target))
+
